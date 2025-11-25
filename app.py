@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, jsonify
-import re
+import os
 
 app = Flask(__name__)
 
@@ -7,7 +7,8 @@ class RuleBasedChatbot:
     def __init__(self):
         self.sensitive_keywords = [
             'hate', 'violence', 'kill', 'harm', 'suicide', 'bomb', 'weapon',
-            'drugs', 'illegal', 'porn', 'explicit', 'racist', 'discriminate'
+            'drugs', 'illegal', 'porn', 'explicit', 'racist', 'discriminate',
+            'attack', 'murder', 'terrorist', 'abuse'
         ]
         
         self.responses = {
@@ -47,6 +48,14 @@ class RuleBasedChatbot:
                 "I can help you with general information, answer questions, tell jokes, and more! Just ask me anything.",
                 "Feel free to ask me about various topics, and I'll do my best to assist you!"
             ],
+            'math': [
+                "I can help with basic math concepts! For complex calculations, you might need a calculator.",
+                "Math is fun! I can discuss basic arithmetic and mathematical concepts."
+            ],
+            'programming': [
+                "I can help with basic programming concepts! For complex code, you might need specialized tools.",
+                "Programming is awesome! I can discuss basic coding principles and best practices."
+            ],
             'default': [
                 "I'm not sure I understand. Could you rephrase that?",
                 "That's an interesting question. Could you provide more details?",
@@ -69,11 +78,11 @@ class RuleBasedChatbot:
             return "Sorry, I can't assist you with this. Please ask something else."
         
         # Greeting patterns
-        if any(word in user_input for word in ['hello', 'hi', 'hey', 'greetings']):
+        if any(word in user_input for word in ['hello', 'hi', 'hey', 'greetings', 'good morning', 'good afternoon']):
             return self.responses['greeting'][0]
         
         # Farewell patterns
-        elif any(word in user_input for word in ['bye', 'goodbye', 'see you', 'exit', 'quit']):
+        elif any(word in user_input for word in ['bye', 'goodbye', 'see you', 'exit', 'quit', 'goodbye']):
             return self.responses['farewell'][0]
         
         # Thanks patterns
@@ -81,24 +90,36 @@ class RuleBasedChatbot:
             return self.responses['thanks'][0]
         
         # Name patterns
-        elif any(word in user_input for word in ['who are you', 'what are you', 'your name']):
+        elif any(word in user_input for word in ['who are you', 'what are you', 'your name', 'what is your name']):
             return self.responses['name'][0]
         
         # Weather patterns
-        elif any(word in user_input for word in ['weather', 'temperature', 'forecast']):
+        elif any(word in user_input for word in ['weather', 'temperature', 'forecast', 'rain', 'sunny']):
             return self.responses['weather'][0]
         
         # Time patterns
-        elif any(word in user_input for word in ['time', 'clock', 'what time']):
+        elif any(word in user_input for word in ['time', 'clock', 'what time', 'current time']):
             return self.responses['time'][0]
         
         # Joke patterns
-        elif any(word in user_input for word in ['joke', 'funny', 'make me laugh']):
+        elif any(word in user_input for word in ['joke', 'funny', 'make me laugh', 'tell me a joke']):
             return self.responses['joke'][0]
         
         # Help patterns
-        elif any(word in user_input for word in ['help', 'what can you do', 'capabilities']):
+        elif any(word in user_input for word in ['help', 'what can you do', 'capabilities', 'how to use']):
             return self.responses['help'][0]
+        
+        # Math patterns
+        elif any(word in user_input for word in ['math', 'calculate', 'addition', 'subtraction', 'multiplication', 'division']):
+            return self.responses['math'][0]
+        
+        # Programming patterns
+        elif any(word in user_input for word in ['programming', 'code', 'python', 'javascript', 'java', 'coding']):
+            return self.responses['programming'][0]
+        
+        # How are you patterns
+        elif any(word in user_input for word in ['how are you', 'how do you do', 'how is it going']):
+            return "I'm just a chatbot, but I'm functioning well! How can I help you today?"
         
         # Default response
         else:
@@ -113,9 +134,17 @@ def home():
 
 @app.route('/chat', methods=['POST'])
 def chat():
-    user_message = request.json.get('message', '')
-    bot_response = chatbot.get_response(user_message)
-    return jsonify({'response': bot_response})
+    try:
+        user_message = request.json.get('message', '')
+        bot_response = chatbot.get_response(user_message)
+        return jsonify({'response': bot_response})
+    except Exception as e:
+        return jsonify({'response': 'Sorry, I encountered an error. Please try again.'})
+
+@app.route('/health')
+def health():
+    return jsonify({'status': 'healthy', 'message': 'Chatbot is running!'})
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)
